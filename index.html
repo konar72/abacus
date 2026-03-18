@@ -9,12 +9,13 @@
     --border: #d0d0d0;
     --border-section: #333;
     --bg-header: #f5f5f5;
-    --bg-computed: #f0f4f8;
+    --bg-computed: #f5f5f5;
     --check-color: #222;
     --check-computed: #4a7c59;
-    --accent: #e86c2d;
-    --hover: #fdf6f0;
-    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --accent: #000000;
+    --hover: #ffffff;
+    --hover-cross: #fdf6f0;
+    --font: Helvetica, Arial, sans-serif;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -31,40 +32,15 @@
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 2px;
-    text-align: right;
-    margin-bottom: 4px;
+    text-align: left;
+    margin-bottom: 12px;
     color: #333;
   }
-
-  .nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-
-  .nav-week {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .nav-week button {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 2px 8px;
-    font-size: 14px;
-    color: #555;
-  }
-  .nav-week button:hover { background: var(--bg-header); }
 
   .table-wrap {
     overflow-x: auto;
     margin-bottom: 8px;
+    margin-right: 0;
   }
 
   table {
@@ -84,11 +60,12 @@
 
   /* Column widths */
   col.col-why   { width: 40px; }
-  col.col-habit { width: 180px; }
+  col.col-habit { width: 400px; }
   col.col-freq  { width: 62px; }
   col.col-day   { width: 30px; }
   col.col-week  { width: 32px; }
   col.col-month { width: 30px; }
+  col.col-del   { width: 20px; }
 
   /* Section group headers */
   thead tr:first-child th {
@@ -122,7 +99,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  td.editable:hover { background: var(--hover); }
   td.editable:focus {
     outline: 2px solid var(--accent);
     outline-offset: -2px;
@@ -149,7 +125,16 @@
     font-size: 15px;
     color: var(--check-color);
   }
-  td.toggle-cell:hover { background: var(--hover); }
+  /* Row/column crosshair highlight */
+  tr.row-highlight td:not(.row-delete) { background: var(--hover-cross); }
+  tr.row-highlight td.computed { background: #ededed; }
+  td.col-highlight { background: var(--hover-cross) !important; }
+  td.computed.col-highlight { background: #ededed !important; }
+  td.cell-hover {
+    background: var(--hover) !important;
+    outline: 1.5px solid #ccc;
+    outline-offset: -1.5px;
+  }
   td.toggle-cell.checked::after {
     content: "✓";
   }
@@ -161,21 +146,41 @@
     font-size: 14px;
     color: var(--check-computed);
   }
-  td.computed.checked::after {
-    content: "✓";
+  td.computed.has-count {
+    font-size: 12px;
+    font-weight: 600;
   }
-  td.computed.missed::after {
-    content: "–";
-    color: #bbb;
+
+  /* Current day column highlight */
+  td.current-day {
+    border-left: 2px solid #e86c2d !important;
+    border-right: 2px solid #e86c2d !important;
+  }
+  th.current-day-header {
+    background: #e86c2d !important;
+    color: #fff !important;
+    border-left: 2px solid #e86c2d !important;
+    border-right: 2px solid #e86c2d !important;
+  }
+
+  /* Current week (in month) highlight */
+  td.current-week {
+    background: #ebebeb;
+  }
+  th.current-week-header {
+    background: #d9d9d9 !important;
+    color: #333 !important;
+    font-weight: 800 !important;
   }
 
   /* Current month highlight */
   td.current-month {
-    background: #fff8f0;
+    background: #ebebeb;
   }
   th.current-month-header {
-    background: var(--accent) !important;
-    color: #fff !important;
+    background: #d9d9d9 !important;
+    color: #333 !important;
+    font-weight: 800 !important;
   }
 
   /* Add row button */
@@ -198,11 +203,16 @@
   /* Delete button */
   td.row-delete {
     border: none;
-    width: 20px;
+    background: none;
     cursor: pointer;
     color: #ccc;
     font-size: 14px;
+    width: 20px;
+    padding: 0 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
   }
+  tr:hover td.row-delete { opacity: 1; }
   td.row-delete:hover { color: #e44; }
 
   /* Tagline */
@@ -228,22 +238,14 @@
     .no-print { display: none !important; }
     table { min-width: unset; width: 100%; }
     td.toggle-cell:hover, td.editable:hover { background: transparent; }
-    td.row-delete { display: none; }
+    .row-delete { display: none; }
     h1 { font-size: 10pt; }
   }
 </style>
 </head>
 <body>
 
-<div class="nav no-print">
-  <div class="nav-week">
-    <button onclick="navigateWeek(-1)" title="Previous week">◀</button>
-    <span id="weekLabel"></span>
-    <button onclick="navigateWeek(1)" title="Next week">▶</button>
-    <button onclick="goToCurrentWeek()" title="Go to current week" style="margin-left:4px; font-size:11px;">Today</button>
-  </div>
-  <h1>ABACUS HABIT TRACKER</h1>
-</div>
+<h1>ABACUS HABIT TRACKER</h1>
 
 <div class="table-wrap">
   <table id="tracker">
@@ -251,26 +253,52 @@
       <col class="col-why">
       <col class="col-habit">
       <col class="col-freq">
-      <col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day"><col class="col-day">
-      <col class="col-week"><col class="col-week"><col class="col-week"><col class="col-week"><col class="col-week">
-      <col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month"><col class="col-month">
+      <!-- Week view: 7 days -->
+      <col class="col-day">
+      <col class="col-day">
+      <col class="col-day">
+      <col class="col-day">
+      <col class="col-day">
+      <col class="col-day">
+      <col class="col-day">
+      <!-- Month view: up to 5 weeks -->
+      <col class="col-week">
+      <col class="col-week">
+      <col class="col-week">
+      <col class="col-week">
+      <col class="col-week">
+      <!-- Year view: 12 months -->
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-month">
+      <col class="col-del no-print">
     </colgroup>
     <thead>
       <tr>
-        <th colspan="3"></th>
+        <th colspan="2">
+        <th colspan="1" style="border-bottom:1px solid var(--border);">FREQ.</th>
         <th colspan="7" style="border-bottom:1px solid var(--border);">THIS WEEK</th>
         <th colspan="5" class="section-start" style="border-bottom:1px solid var(--border);">THIS MONTH</th>
         <th colspan="12" class="section-start" style="border-bottom:1px solid var(--border);">THIS YEAR</th>
-        <th class="no-print" style="border:none;"></th>
+        <th style="border:none;"></th>
       </tr>
       <tr>
         <th>Why?</th>
-        <th style="text-align:left;padding-left:6px;">Habits</th>
+        <th style="text-align:center;padding-left:6px;">Habits</th>
         <th># / Time</th>
         <th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th><th>S</th>
         <th class="section-start">W1</th><th>W2</th><th>W3</th><th>W4</th><th>W5</th>
         <th class="section-start" id="mh01">01</th><th id="mh02">02</th><th id="mh03">03</th><th id="mh04">04</th><th id="mh05">05</th><th id="mh06">06</th><th id="mh07">07</th><th id="mh08">08</th><th id="mh09">09</th><th id="mh10">10</th><th id="mh11">11</th><th id="mh12">12</th>
-        <th class="no-print" style="border:none;width:20px;"></th>
+        <th style="border:none;"></th>
       </tr>
     </thead>
     <tbody id="habitRows"></tbody>
@@ -282,10 +310,10 @@
 </div>
 
 <div class="tagline">
-  <span>Your <b>daily</b> actions…</span>
+  <!-- <span>Your <b>daily</b> actions…</span>
   <span>turn into <b>weekly</b> habits…</span>
   <span>which compound into <b>monthly</b> results…</span>
-  <span>and become <b>lifelong</b> transformations</span>
+  <span>and become <b>lifelong</b> transformations</span> -->
   <span style="margin-left:auto;font-weight:600;color:#333;letter-spacing:1px;">ABACUS HABIT TRACKER</span>
 </div>
 
@@ -329,10 +357,6 @@
       }
     }
     return weeks;
-  }
-
-  function formatMonthName(m) {
-    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1];
   }
 
   // ── Data layer ──
@@ -385,18 +409,11 @@
 
   let data = loadData();
 
-  // ── State ──
+  // ── State (always current week) ──
   const now = new Date();
-  let viewYear = getISOYear(now);
-  let viewWeek = getISOWeek(now);
-
-  function getViewMonth() {
-    const ws = getWeekStart(viewYear, viewWeek);
-    // Use Thursday of the week to determine which month the week "belongs" to
-    const thu = new Date(ws);
-    thu.setUTCDate(thu.getUTCDate() + 3);
-    return { year: thu.getUTCFullYear(), month: thu.getUTCMonth() + 1 };
-  }
+  const viewYear = getISOYear(now);
+  const viewWeek = getISOWeek(now);
+  const viewMonth = now.getMonth() + 1;
 
   // ── Computation ──
   function weekKey(isoYear, week) {
@@ -442,26 +459,6 @@
     const ws = getWeekStart(isoYear, week);
     return today >= ws;
   }
-
-  // ── Navigation ──
-  window.navigateWeek = function(dir) {
-    viewWeek += dir;
-    if (viewWeek < 1) {
-      viewYear--;
-      viewWeek = 52;
-    } else if (viewWeek > 52) {
-      viewYear++;
-      viewWeek = 1;
-    }
-    render();
-  };
-
-  window.goToCurrentWeek = function() {
-    const n = new Date();
-    viewYear = getISOYear(n);
-    viewWeek = getISOWeek(n);
-    render();
-  };
 
   // ── Actions ──
   window.addHabit = function() {
@@ -511,27 +508,50 @@
   }
 
   // ── Render ──
-  function render() {
-    const vm = getViewMonth();
-    const weeksInMonth = getWeeksInMonth(vm.year, vm.month);
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+  // Current day of week: 0=Mon, 6=Sun
+  const currentDayIndex = (now.getDay() + 6) % 7;
 
-    // Week label
-    const ws = getWeekStart(viewYear, viewWeek);
-    const we = new Date(ws);
-    we.setUTCDate(we.getUTCDate() + 6);
-    document.getElementById('weekLabel').textContent =
-      `Week ${viewWeek}, ${formatMonthName(vm.month)} ${vm.year}  (${ws.getUTCDate()} ${formatMonthName(ws.getUTCMonth()+1)} – ${we.getUTCDate()} ${formatMonthName(we.getUTCMonth()+1)})`;
+  function render() {
+    const weeksInMonth = getWeeksInMonth(data.year, viewMonth);
+    const currentMonth = viewMonth;
+    const currentYear = now.getFullYear();
+
+    // Highlight current day header
+    const dayHeaderCells = document.querySelectorAll('thead tr:nth-child(2) th');
+    dayHeaderCells.forEach((th, i) => {
+      // Day headers are at indices 3-9 (after Why, Habits, #/Time)
+      if (i >= 3 && i <= 9) {
+        const dayIdx = i - 3;
+        if (dayIdx === currentDayIndex) {
+          th.classList.add('current-day-header');
+        } else {
+          th.classList.remove('current-day-header');
+        }
+      }
+    });
+
+    // Find current week index within month (0-4)
+    const currentWeekInMonth = weeksInMonth.findIndex(w => w.isoYear === viewYear && w.week === viewWeek);
+
+    // Highlight current week header (W1-W5)
+    const headerCells2 = document.querySelectorAll('thead tr:nth-child(2) th');
+    headerCells2.forEach((th, i) => {
+      // Week headers are at indices 10-14 (after Why, Habits, #/Time, M-S)
+      if (i >= 10 && i <= 14) {
+        const wIdx = i - 10;
+        if (wIdx === currentWeekInMonth) {
+          th.classList.add('current-week-header');
+        } else {
+          th.classList.remove('current-week-header');
+        }
+      }
+    });
 
     // Highlight current month header
     for (let m = 1; m <= 12; m++) {
       const el = document.getElementById('mh' + String(m).padStart(2, '0'));
       if (m === currentMonth && data.year === currentYear) {
-        el.className = 'section-start current-month-header';
-      } else if (m === vm.month) {
-        el.className = (m === 1 ? 'section-start' : '');
-        el.style.fontWeight = '800';
+        el.className = (m === 1 ? 'section-start ' : '') + 'current-month-header';
       } else {
         el.className = (m === 1 ? 'section-start' : '');
         el.style.fontWeight = '';
@@ -578,37 +598,41 @@
       const checks = getDayChecks(habit, viewYear, viewWeek);
       for (let d = 0; d < 7; d++) {
         const td = document.createElement('td');
-        td.className = 'toggle-cell' + (checks[d] ? ' checked' : '');
+        td.className = 'toggle-cell' + (checks[d] ? ' checked' : '') + (d === currentDayIndex ? ' current-day' : '');
         td.addEventListener('click', () => toggleDay(habit.id, d));
         tr.appendChild(td);
       }
 
-      // Weekly cells (W1-W5)
+      // Weekly cells (W1-W5) — show count of checked days
       for (let w = 0; w < 5; w++) {
         const td = document.createElement('td');
         td.className = 'computed' + (w === 0 ? ' section-start' : '');
+        if (w === currentWeekInMonth) td.classList.add('current-week');
         if (w < weeksInMonth.length) {
           const wk = weeksInMonth[w];
-          if (isWeekMet(habit, wk.isoYear, wk.week)) {
-            td.classList.add('checked');
-          } else if (hasWeekStarted(wk.isoYear, wk.week) && habit.freqCount) {
-            td.classList.add('missed');
+          const count = countCheckedDays(habit, wk.isoYear, wk.week);
+          if (count > 0) {
+            td.textContent = count;
+            td.classList.add('has-count');
           }
         }
         tr.appendChild(td);
       }
 
-      // Monthly cells (01-12)
+      // Monthly cells (01-12) — show count of met weeks
       for (let m = 1; m <= 12; m++) {
         const td = document.createElement('td');
         td.className = 'computed' + (m === 1 ? ' section-start' : '');
         if (m === currentMonth && data.year === currentYear) {
           td.classList.add('current-month');
         }
-        if (isMonthMet(habit, data.year, m)) {
-          td.classList.add('checked');
-        } else if (hasMonthStarted(data.year, m) && m !== currentMonth && habit.freqCount) {
-          td.classList.add('missed');
+        if (habit.freqCount) {
+          const monthWeeks = getWeeksInMonth(data.year, m);
+          const metCount = monthWeeks.filter(w => isWeekMet(habit, w.isoYear, w.week)).length;
+          if (metCount > 0) {
+            td.textContent = metCount;
+            td.classList.add('has-count');
+          }
         }
         tr.appendChild(td);
       }
@@ -635,6 +659,43 @@
       const text = (e.clipboardData || window.clipboardData).getData('text/plain');
       document.execCommand('insertText', false, text);
     }
+  });
+
+  // Crosshair highlight on hover
+  const table = document.getElementById('tracker');
+  table.addEventListener('mouseover', function(e) {
+    const td = e.target.closest('td');
+    if (!td) return;
+
+    // Clear previous highlights
+    table.querySelectorAll('.row-highlight').forEach(r => r.classList.remove('row-highlight'));
+    table.querySelectorAll('.col-highlight').forEach(c => c.classList.remove('col-highlight'));
+    table.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
+
+    // Skip crosshair for computed (ineditable) cells
+    if (td.classList.contains('computed') || td.classList.contains('row-delete')) return;
+
+    const tr = td.parentElement;
+    const colIndex = td.cellIndex;
+
+    // Highlight row
+    tr.classList.add('row-highlight');
+
+    // Highlight column
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(r => {
+      const cell = r.cells[colIndex];
+      if (cell && cell !== td) cell.classList.add('col-highlight');
+    });
+
+    // Highlight active cell
+    td.classList.add('cell-hover');
+  });
+
+  table.addEventListener('mouseleave', function() {
+    table.querySelectorAll('.row-highlight').forEach(r => r.classList.remove('row-highlight'));
+    table.querySelectorAll('.col-highlight').forEach(c => c.classList.remove('col-highlight'));
+    table.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
   });
 
   render();
